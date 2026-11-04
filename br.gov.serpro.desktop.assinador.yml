@@ -1,0 +1,70 @@
+# Manifesto Flatpak do Assinador Serpro, pacote da comunidade.
+#
+# O item 12 do termo de uso diz que só o Serpro distribui os arquivos de
+# instalação. Por isso nada do Serpro entra neste pacote: ele leva o lançador e
+# um módulo PKCS#11, e o instalador oficial é baixado da URL do Serpro na
+# máquina de quem instala, como extra-data. Ver docs/arquitetura.md.
+id: br.gov.serpro.desktop.assinador
+runtime: org.freedesktop.Platform
+runtime-version: '26.08'
+sdk: org.freedesktop.Sdk
+command: assinador-serpro
+
+finish-args:
+  # O servidor local que as páginas usam (127.0.0.1:65156 e 65166), as listas
+  # de revogação e o carimbo do tempo.
+  - --share=network
+  # O Java/AWT só fala X11; no Wayland roda pelo XWayland.
+  - --share=ipc
+  - --socket=x11
+  - --device=dri
+  # Onde costumam estar os documentos e os certificados A1.
+  - --filesystem=xdg-documents
+  - --filesystem=xdg-download
+  # Tokens A3: o mesmo contrato do PJeOffice Pro da FlatPark. O driver roda no
+  # host, ou numa central como o Tessera, e chega aqui pelo p11-kit do usuário.
+  # Sem --socket=pcsc e sem --device=all: o token não é aberto no sandbox.
+  - --filesystem=xdg-run/p11-kit/pkcs11
+  # Configuração, log e lista de drivers ficam no sandbox.
+  - --persist=.serpro
+  - --persist=.signer
+  - --persist=.demoiselle
+
+modules:
+  - name: assinador-serpro
+    buildsystem: simple
+    build-commands:
+      - gcc -shared -fPIC -O2 -Wall -Wextra -Werror
+        -DMODULO_CLIENTE="\"$(pkg-config --variable=p11_module_path p11-kit-1)/p11-kit-client.so\""
+        $(pkg-config --cflags p11-kit-1)
+        -o tokens-p11.so tokens-p11.c -ldl
+      - gcc -shared -fPIC -O2 -Wall -Wextra -Werror -o nome-local.so nome-local.c -ldl
+      - install -Dm755 tokens-p11.so /app/lib/assinador-serpro/tokens-p11.so
+      - install -Dm755 nome-local.so /app/lib/assinador-serpro/nome-local.so
+      - install -Dm755 assinador-serpro.sh /app/bin/assinador-serpro
+      - install -Dm755 apply_extra.sh /app/bin/apply_extra
+      - install -Dm644 br.gov.serpro.desktop.assinador.desktop
+        /app/share/applications/br.gov.serpro.desktop.assinador.desktop
+      - install -Dm644 br.gov.serpro.desktop.assinador.metainfo.xml
+        /app/share/metainfo/br.gov.serpro.desktop.assinador.metainfo.xml
+    sources:
+      - type: extra-data
+        filename: assinador.bin
+        url: https://artefatos-assinador.serpro.gov.br/downloads/4.6.0/Assinador-Serpro-4.6.0-Linux-x86_64.bin
+        sha256: 839c66e60530bd9668ce73b18be15ebb38d927a7f9b8f1395d7f150a1db3e99f
+        size: 103260322
+        installed-size: 165212160
+        only-arches:
+          - x86_64
+      - type: file
+        path: src/tokens-p11.c
+      - type: file
+        path: src/nome-local.c
+      - type: file
+        path: src/assinador-serpro.sh
+      - type: file
+        path: src/apply_extra.sh
+      - type: file
+        path: br.gov.serpro.desktop.assinador.desktop
+      - type: file
+        path: br.gov.serpro.desktop.assinador.metainfo.xml

@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Assinador Serpro
+Comment=Assinatura digital com certificado ICP-Brasil
+Exec=assinador-serpro %U
+Icon=br.gov.serpro.desktop.assinador
+Type=Application
+Categories=Office;
+Terminal=false
+StartupNotify=true
+StartupWMClass=org-demoiselle-signer-serpro-desktop-Main
+MimeType=application/pdf;application/xml;

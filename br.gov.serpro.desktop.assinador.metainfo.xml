@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>br.gov.serpro.desktop.assinador</id>
+  <name>Assinador Serpro</name>
+  <summary>Assinatura digital com certificado ICP-Brasil</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>LicenseRef-proprietary=https://artefatos-assinador.serpro.gov.br/</project_license>
+  <developer id="dev.lukakuuhaku">
+    <name>Empacotamento da comunidade</name>
+  </developer>
+  <description>
+    <p>Pacote da comunidade, sem vínculo com o Serpro. O programa é baixado do site do Serpro na instalação, e o uso dele segue o termo de uso do Serpro.</p>
+    <p>Assina documentos com certificado A1 ou com token A3. Tokens chegam pelo servidor p11-kit do usuário, o mesmo caminho do PJeOffice Pro da FlatPark.</p>
+  </description>
+  <launchable type="desktop-id">br.gov.serpro.desktop.assinador.desktop</launchable>
+  <url type="homepage">https://artefatos-assinador.serpro.gov.br/</url>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="4.6.0" date="2026-10-29"/>
+  </releases>
+</component>
