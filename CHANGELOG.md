@@ -4,6 +4,8 @@ Formato do [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ## [Unreleased]
 
+## [4.6.0-1] - 2026-11-05
+
 ### Added
 
 - Pacote Flatpak do Assinador Serpro 4.6.0, com o instalador oficial baixado do
@@ -14,3 +16,4 @@ Formato do [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
   dentro do sandbox.
 - Identificador `br.gov.serpro.desktop.assinador`, o mesmo do pacote de macOS do
   Serpro.
+- Instalação por `.flatpakref`, de um repositório assinado no GitHub Pages.

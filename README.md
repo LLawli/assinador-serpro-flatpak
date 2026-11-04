@@ -12,12 +12,8 @@ sistemas, ou prefere não instalar nada fora do sandbox.
 
 ## Instalar
 
-Ainda não há release: o plano está em [docs/release.md](docs/release.md). Para
-construir e instalar a partir deste código:
-
 ```sh
-flatpak install flathub org.flatpak.Builder
-./scripts/construir.sh
+flatpak install --user --from https://llawli.github.io/assinador-serpro-flatpak/assinador-serpro.flatpakref
 ```
 
 A instalação baixa cerca de 100 MB do site do Serpro e confere o sha256. Depois
@@ -69,7 +65,14 @@ feche e abra o Assinador antes de assinar de novo.
 ## Para quem contribui
 
 [docs/arquitetura.md](docs/arquitetura.md) explica como o pacote funciona e o que
-foi medido. `./scripts/ci.sh` roda todas as verificações.
+foi medido, e [docs/release.md](docs/release.md), como sai uma versão.
+`./scripts/ci.sh` roda todas as verificações, as mesmas que um PR precisa passar.
+Para construir e instalar a partir do código:
+
+```sh
+flatpak install flathub org.flatpak.Builder
+./scripts/construir.sh
+```
 
 ## Licença
 

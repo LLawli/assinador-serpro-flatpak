@@ -1,6 +1,23 @@
-# Plano de release
+# Release
 
-Ainda não executado. Nada foi publicado além do código.
+A assinatura roda na máquina de quem publica, como no flatpak-adv-br. `scripts/publicar.sh
+--enviar` constrói, assina com a chave do cartão e deixa o site em um rascunho de
+release. A tag `v*.*.*` dispara `.github/workflows/release.yml`, que roda `scripts/ci.sh`,
+confere se a chave do site é a de `packaging/chave-publica.asc`, publica no GitHub Pages
+e fecha o Release com o `.flatpakref`, o `.flatpakrepo`, o tarball do código e os
+sha256. O corpo vem da seção da versão no CHANGELOG, e o workflow falha sem ela.
+`workflow_dispatch` na tag refaz a publicação.
+
+## A cada versão do Serpro
+
+1. Atualizar `url`, `sha256`, `size` e `installed-size` no manifesto.
+2. Acrescentar o `<release>` no metainfo e mover o `[Unreleased]` do CHANGELOG.
+3. Rodar `scripts/ci.sh`, instalar na VM e assinar com um token real.
+4. Rodar `scripts/publicar.sh --enviar`, com a YubiKey plugada: cada ref e o summary
+   pedem um toque.
+5. Criar a tag assinada, no formato `v4.6.0-1`, e enviar com `git push origin <tag>`.
+
+O sufixo conta as revisões do empacotamento sobre a mesma versão do Serpro.
 
 ## Identificador
 
@@ -9,7 +26,7 @@ macOS, conforme o [cask do Homebrew](https://formulae.brew.sh/cask/assinador-ser
 (versão 4.3.3). O instalador Linux e o jar não trazem outro. O pacote continua sendo
 da comunidade, e o README e o metainfo dizem isso.
 
-## Formato
+## Por que `.flatpakref`, e não `.flatpak`
 
 O termo de uso reserva a distribuição ao Serpro, então o programa entra por
 `extra-data` e o pacote só leva o empacotamento. Medido com o ID final:
@@ -18,34 +35,21 @@ O termo de uso reserva a distribuição ao Serpro, então o programa entra por
 |---|---|
 | `.flatpak` | falha: "Dados extras faltando nos metadados destacados" |
 | `.flatpak` com `--repo-url` | falha com o mesmo erro |
-| `.flatpakref` | instala, baixa do Serpro e exporta o ícone |
-
-O release é um `.flatpakref` apontando para um repositório OSTree. Ele abre com dois
-cliques, como um `.flatpak`, e ainda traz atualizações.
+| `.flatpakref` | instala, baixa do Serpro, exporta o ícone e recebe atualizações |
 
 Um `.flatpak` de verdade exigiria tirar o `extra-data` e baixar o programa na primeira
 execução. Isso muda o caminho testado, perde o ícone exportado e pede uma tela de
-progresso. Fica de fora enquanto o `.flatpakref` atender.
+progresso.
 
-## Hospedagem
+Formatos nativos (deb, rpm, AUR, Homebrew) ficam de fora: o Serpro já distribui o
+instalador nativo, e este projeto existe para quem não pode usá-lo.
 
-GitHub Pages, deste repositório. O repositório OSTree tem cerca de 360 KB, porque não
-contém o programa do Serpro.
+## Chave do repositório
 
-## Antes do primeiro release
-
-1. Criar uma chave GPG só para o repositório, com a privada em um secret do Actions.
-2. Escrever `.github/workflows/release.yml`: em tag `v*`, rodar `scripts/ci.sh`,
-   construir, assinar, publicar no Pages e criar o Release com o `.flatpakref` e o
-   `.flatpakrepo`.
-3. Trocar a seção Instalar do README.
-
-## A cada versão do Serpro
-
-1. Atualizar `url`, `sha256`, `size` e `installed-size` no manifesto.
-2. Acrescentar o `<release>` no metainfo e mover o `[Unreleased]` do CHANGELOG.
-3. Rodar `scripts/ci.sh`, instalar na VM e assinar com um token real.
-4. Criar a tag assinada, no formato `v4.6.0-1`, e enviar com `git push origin <tag>`.
+É a mesma chave GPG do flatpak-adv-br, gerada dentro da YubiKey. A pública está em
+`packaging/chave-publica.asc`, e `scripts/publicar.sh` recusa assinar com outra. Nenhum
+segredo fica no GitHub. O repositório local mora em
+`~/.local/share/assinador-serpro-repo` e guarda o histórico que os deltas usam.
 
 ## Riscos
 

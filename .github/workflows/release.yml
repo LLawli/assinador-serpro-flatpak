@@ -1,0 +1,73 @@
+name: release
+on:
+  push:
+    tags: ['v*.*.*']
+  workflow_dispatch:
+concurrency: release
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.pages.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y shellcheck gcc pkg-config libp11-kit-dev zstd desktop-file-utils appstream
+      - run: ./scripts/ci.sh
+
+      # O repositório é assinado na máquina de quem publica, por scripts/publicar.sh
+      # --enviar. Aqui não há chave: só se confere o que chegou.
+      - name: Baixa o site assinado
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p site saida
+          gh release download "$GITHUB_REF_NAME" -p assinador-serpro-site.tar.gz -O site.tar.gz
+          tar -C site -xzf site.tar.gz
+          test -s site/repo/summary.sig
+          esperada=$(gpg --show-keys --with-colons packaging/chave-publica.asc | awk -F: '/^fpr/ { print $10; exit }')
+          for arquivo in site/assinador-serpro.flatpakref site/assinador-serpro.flatpakrepo; do
+              recebida=$(sed -n 's/^GPGKey=//p' "$arquivo" | base64 -d | gpg --show-keys --with-colons | awk -F: '/^fpr/ { print $10; exit }')
+              [ "$recebida" = "$esperada" ] || { echo "$arquivo com a chave $recebida" >&2; exit 1; }
+          done
+
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+      - id: pages
+        uses: actions/deploy-pages@v4
+
+      - name: Monta o corpo do release
+        run: |
+          versao=${GITHUB_REF_NAME#v}
+          git archive --format=tar.gz --prefix="assinador-serpro-flatpak-$versao/" \
+              -o "saida/assinador-serpro-flatpak-$versao.tar.gz" HEAD
+          cp site/assinador-serpro.flatpakref site/assinador-serpro.flatpakrepo site.tar.gz saida/
+          mv saida/site.tar.gz saida/assinador-serpro-site.tar.gz
+          (cd saida && sha256sum ./* > ../SHA256SUMS) && mv SHA256SUMS saida/
+          awk -v v="[$versao]" '
+              $1 == "##" && $2 == v { dentro = 1; next }
+              $1 == "##" { dentro = 0 }
+              dentro
+          ' CHANGELOG.md > mudancas.md
+          # Um release sem o que mudou não informa nada.
+          grep -q '[^[:space:]]' mudancas.md || { echo "CHANGELOG sem a seção $versao" >&2; exit 1; }
+          {
+              cat mudancas.md
+              printf '\n## Instalar\n\n```sh\nflatpak install --user --from https://llawli.github.io/assinador-serpro-flatpak/assinador-serpro.flatpakref\n```\n'
+              printf '\nA instalação baixa o programa do site do Serpro. Nada do Serpro está nos arquivos abaixo.\n'
+              printf '\n## sha256\n\n```\n'
+              cat saida/SHA256SUMS
+              printf '```\n'
+          } > corpo.md
+
+      - name: Publica o release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "$GITHUB_REF_NAME" --clobber saida/*
+          gh release edit "$GITHUB_REF_NAME" --draft=false --notes-file corpo.md
