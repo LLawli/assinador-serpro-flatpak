@@ -1,0 +1,21 @@
+name: versao-serpro
+on:
+  schedule:
+    # 08:17 em Brasília.
+    - cron: '17 11 * * *'
+  workflow_dispatch:
+permissions:
+  actions: write
+  contents: read
+jobs:
+  verificar:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./scripts/verificar-serpro.sh
+      # O GitHub desliga agendamentos após 60 dias sem atividade no repositório.
+      - if: always()
+        run: gh workflow enable versao-serpro.yml
+        env:
+          GH_TOKEN: ${{ github.token }}

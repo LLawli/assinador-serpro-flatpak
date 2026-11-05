@@ -56,3 +56,44 @@ if (cd "$extra" && sh "$raiz/src/apply_extra.sh" 2>/dev/null); then
     exit 1
 fi
 echo '  ok   um instalador sem o conteúdo esperado falha'
+
+# Um curl de mentira: -I responde o tamanho, o resto responde a listagem.
+echo 'verificar-serpro.sh'
+manifesto="$raiz/br.gov.serpro.desktop.assinador.yml"
+atual=$(sed -n 's/^ *url: .*\/Assinador-Serpro-\([0-9.]*\)-Linux.*/\1/p' "$manifesto")
+tamanho=$(sed -n 's/^ *size: //p' "$manifesto")
+mkdir -p "$tmp/rede"
+cat > "$tmp/rede/curl" <<'CURL'
+#!/bin/sh
+[ -n "$PAGINA" ] || exit 28
+case $1 in
+    -fsSIL) printf 'HTTP/1.1 200 OK\r\nContent-Length: %s\r\n\r\n' "$TAMANHO" ;;
+    *) printf '%s\n' "$PAGINA" ;;
+esac
+CURL
+chmod +x "$tmp/rede/curl"
+verificar() { # <página> <tamanho>
+    PATH="$tmp/rede:$PATH" PAGINA="$1" TAMANHO="$2" \
+        sh "$raiz/scripts/verificar-serpro.sh" 2>&1
+}
+item() {
+    printf 'href="downloads/%s/Assinador-Serpro-%s-Linux-x86_64.bin"\n' "$1" "$1"
+}
+recusa() { # <descrição> <mensagem esperada> <página> <tamanho>
+    if saida=$(verificar "$3" "$4"); then
+        echo "  ERRO $1: passou"
+        exit 1
+    fi
+    case $saida in
+        *"$2"*) echo "  ok   $1" ;;
+        *) echo "  ERRO $1: $saida"; exit 1 ;;
+    esac
+}
+homologacao='Assinador-Serpro-99.0.0-HOM-Linux-x86_64.bin'
+verificar "$(item 1.0.0; item "$atual"; echo "$homologacao")" "$tamanho" >/dev/null
+echo '  ok   passa na última versão, ignorando a de homologação'
+recusa 'versão nova falha' 'publicou a versão 99.0.0' \
+    "$(item "$atual"; item 99.0.0)" "$tamanho"
+recusa 'tamanho diferente falha' 'mudou' "$(item "$atual")" 5
+recusa 'página sem a versão do manifesto falha' 'não está em' '<html></html>' "$tamanho"
+recusa 'site fora do ar falha' 'não consegui consultar' '' "$tamanho"

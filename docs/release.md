@@ -10,6 +10,11 @@ sha256. O corpo vem da seção da versão no CHANGELOG, e o workflow falha sem e
 
 ## A cada versão do Serpro
 
+O workflow `versao-serpro` roda `scripts/verificar-serpro.sh` uma vez por dia e falha,
+mandando email, se a listagem do Serpro tiver um instalador de Linux mais novo, se o
+tamanho do atual mudar, ou se a consulta não funcionar. A mensagem do erro diz qual
+foi. Ele vê tamanho, não hash: um arquivo trocado com o mesmo tamanho passa.
+
 1. Atualizar `url`, `sha256`, `size` e `installed-size` no manifesto.
 2. Acrescentar o `<release>` no metainfo e mover o `[Unreleased]` do CHANGELOG.
 3. Rodar `scripts/ci.sh`, instalar na VM e assinar com um token real.
