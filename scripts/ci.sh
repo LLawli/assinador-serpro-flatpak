@@ -28,12 +28,12 @@ echo '== testes'
 echo '== instalador do Serpro'
 url=$(sed -n 's/^ *url: //p' "$id.yml")
 esperado=$(sed -n 's/^ *size: //p' "$id.yml")
-if tamanho=$(curl -fsSIL -m 30 "$url" | tr -d '\r' | sed -n 's/^[Cc]ontent-[Ll]ength: //p' | tail -1); then
-    if [ "$tamanho" != "$esperado" ]; then
-        echo "o instalador mudou: $tamanho bytes, o manifesto diz $esperado" >&2
-        exit 1
-    fi
-    echo "  ok   $tamanho bytes"
-else
+tamanho=$(curl -fsSIL -m 30 "$url" | tr -d '\r' | sed -n 's/^[Cc]ontent-[Ll]ength: //p' | tail -1)
+if [ -z "$tamanho" ]; then
     echo '  aviso: site do Serpro inacessível daqui'
+elif [ "$tamanho" != "$esperado" ]; then
+    echo "o instalador mudou: $tamanho bytes, o manifesto diz $esperado" >&2
+    exit 1
+else
+    echo "  ok   $tamanho bytes"
 fi
