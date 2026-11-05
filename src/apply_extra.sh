@@ -11,7 +11,7 @@ ICONES=export/share/icons/hicolor/128x128/apps
 
 extrair() { # <deslocamento>
     tail -c "+$(($1 + 1))" "$INSTALADOR" | zstd -dc 2>/dev/null \
-        | tar -xf - ./lib ./jre_amd64 ./serpro-signer.png \
+        | tar --no-same-owner -xf - ./lib ./jre_amd64 ./serpro-signer.png \
             ./TermoDeUsoAssinadorSERPRO.md ./version.json 2>/dev/null
 }
 
