@@ -16,6 +16,19 @@ jobs:
       url: ${{ steps.pages.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+
+      # A FlatPark publica sem revisão a versão desta tag, então ela precisa ser a
+      # do manifesto, que é a testada.
+      - name: Confere a tag com o manifesto
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          versao=${GITHUB_REF_NAME#v}
+          versao=${versao%-*}
+          grep -qF "/downloads/$versao/" br.gov.serpro.desktop.assinador.yml || {
+              echo "a tag $GITHUB_REF_NAME não é a versão do manifesto" >&2
+              exit 1
+          }
+
       - run: sudo apt-get update && sudo apt-get install -y shellcheck gcc pkg-config libp11-kit-dev zstd desktop-file-utils appstream
       - run: ./scripts/ci.sh
 
@@ -71,3 +84,17 @@ jobs:
         run: |
           gh release upload "$GITHUB_REF_NAME" --clobber saida/*
           gh release edit "$GITHUB_REF_NAME" --draft=false --notes-file corpo.md
+
+  # Avisa a FlatPark, que lê a versão nos releases daqui. Sem o aviso ela acha o
+  # release na varredura de 12 em 12 horas, então uma falha aqui não derruba nada.
+  flatpark:
+    needs: release
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-24.04
+    continue-on-error: true
+    permissions: {}
+    steps:
+      - uses: flatpark/publish-action@v1
+        with:
+          app-id: br.gov.serpro.desktop.assinador
+          tag: ${{ github.ref_name }}

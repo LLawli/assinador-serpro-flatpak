@@ -4,6 +4,10 @@ Formato do [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- O release avisa a FlatPark, que passa a publicar a versão testada em minutos.
+
 ## [4.6.0-1] - 2026-11-05
 
 ### Added

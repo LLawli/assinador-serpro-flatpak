@@ -24,6 +24,22 @@ foi. Ele vê tamanho, não hash: um arquivo trocado com o mesmo tamanho passa.
 
 O sufixo conta as revisões do empacotamento sobre a mesma versão do Serpro.
 
+## FlatPark
+
+A tag é a aprovação: é ela que leva uma versão aos usuários da FlatPark, sem revisão de
+ninguém. O `resolve-update.sh` de lá lê o último release daqui, tira o sufixo e monta a
+URL do Serpro, então um instalador novo no site do Serpro não chega a ninguém antes do
+teste com token. O job `flatpark` do `release.yml` avisa a FlatPark por
+`flatpark/publish-action`, sem token nem secret, e ela publica em minutos. Sem o aviso,
+a varredura de 12 em 12 horas acha o mesmo release.
+
+Por isso o `release.yml` falha quando a versão da tag não é a do manifesto. Uma revisão
+do empacotamento (`v4.6.0-2`) não muda nada lá: a versão é a mesma, e o que mudar no
+pacote da FlatPark vai por PR.
+
+Até o app entrar no catálogo da FlatPark, o aviso recebe 404, e o job fica vermelho sem
+afetar o release.
+
 ## Identificador
 
 `br.gov.serpro.desktop.assinador` é o identificador que o Serpro usa no pacote de
